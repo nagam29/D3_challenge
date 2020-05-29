@@ -22,25 +22,22 @@ var chartGroup = svg.append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
 
-function makeMyGraph(healthData) {
-
-    // create state name, healthcoverage, poverty data array
-    stateName=healthData.map(data=>data.state);
-    console.log(stateName);
-    console.log(healthData);
-    healthCoverage=healthData.map(data=>data.healthcarePercent);
-    console.log(healthCoverage);   
-    povertyRate=healthData.map(data=>data.povertyPercent);
-    console.log(povertyRate);
+d3.csv('assets/data/data.csv').then(function(data) {
+        data.forEach(d => {
+            d.state = d.abbr,
+            d.poverty = +d.poverty,
+            d.healthcare = +d.healthcare
+            console.log(d.poverty);
+        });
 
     // scale y to chart height
     var yScale=d3.scaleLinear()
-        .domain([0,d3.max(healthCoverage)])
+        .domain([0,d3.max(data, d => d.healthcare)])
         .range([height,0]);
     
     // scale x to chart width
     var xScale=d3.scaleLinear()
-        .domain([0,d3.max(povertyRate)])
+        .domain([7,d3.max(data, d => d.poverty)])
         .range([0,width]);
 
     // create axes
@@ -57,42 +54,42 @@ function makeMyGraph(healthData) {
     .call(yAxis);
 
     // create circles
-    
-    chartGroup.selectAll('circle')
-        .data(healthData)
-        .enter()
-        .append('circle')
-        .attr('cx',d=> xScale(d.povertyRate))
-        .attr('cy',d=> yScale(d.healthCoverage))
+    var circleGroup=chartGroup.selectAll('circle').data(data).enter()
+    circleGroup.append("circle")
+        .attr("cx", d => xScale(d.poverty))
+        .attr("cy", d => yScale(d.healthcare))
         .attr('r','15')
         .attr('fill','blue')
         .attr("opacity", ".5");
 
-}
-
-// Import csv data
-// Save only the variables I need
-
-d3.csv(
-    '../assets/data/data.csv', 
-    function(row){
-        return {
-            state: row.abbr,
-            povertyPercent: +row.poverty, // reformat string to numeric
-            healthcarePercent: +row.healthcare // reformat string to numeric
-        }
-
-    }
-    ).then(makeMyGraph);
+        circleGroup.append("text")
+        .text(function(d){
+            return d.abbr;
+        })
+        .attr("dx", d => xScale(d.poverty))
+        .attr("dy", d => yScale(d.healthcare)+10/2.5)
+        .attr("font-size","11")
+        .attr("class","stateText");
 
 
+    // add axis label
+    // reference: Helder da Rocha(2019). "Learn D3.js". Packt>. 
+    // Xaxis label
+    d3.select('svg')
+        .append('text')
+        .attr('class','label')
+        .attr("transform", `translate(${width / 2}, ${height + margin.top + 40})`)
+        .text("Rate of Poverty");
+    
+    // y axis label
+    d3.select('svg')
+        .append('text')
+        .attr('class','label')   
+        .attr('transform',`translate(${[20,(height/1.5)]}) rotate(270)`)
+        .text('Lack of Healthcare');
+    
+});
 
 
 
-
-
-
-
-
-// Use myData for creating scales for X and Y
 
